@@ -74,12 +74,23 @@ func startServer(hostAddr string, serviceType string, blockStoreAddr string) err
 	// Create a new RPC server
 	grpcServer := grpc.NewServer()
 
-	// Register RPC services
-	metaStore := surfstore.NewMetaStore(blockStoreAddr)
-	surfstore.RegisterMetaStoreServer(grpcServer, metaStore)
+	log.Printf("service type: %v\n", serviceType)
+	log.Printf("block store addr: %v\n", blockStoreAddr)
 
-	blockStore := surfstore.NewBlockStore()
-	surfstore.RegisterBlockStoreServer(grpcServer, blockStore)
+	// Register RPC services
+	if serviceType == "both" {
+		metaStore := surfstore.NewMetaStore(blockStoreAddr)
+		surfstore.RegisterMetaStoreServer(grpcServer, metaStore)
+
+		blockStore := surfstore.NewBlockStore()
+		surfstore.RegisterBlockStoreServer(grpcServer, blockStore)
+	} else if serviceType == "block" {
+		blockStore := surfstore.NewBlockStore()
+		surfstore.RegisterBlockStoreServer(grpcServer, blockStore)
+	} else {
+		metaStore := surfstore.NewMetaStore(blockStoreAddr)
+		surfstore.RegisterMetaStoreServer(grpcServer, metaStore)
+	}
 
 	// Start listening and serving
 	lis, err := net.Listen("tcp", hostAddr)

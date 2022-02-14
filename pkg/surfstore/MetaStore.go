@@ -3,6 +3,7 @@ package surfstore
 import (
 	context "context"
 	"fmt"
+	"log"
 
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
@@ -30,7 +31,7 @@ func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) 
 			m.FileMetaMap[filename] = fileMetaData
 			return &Version{Version: fileMetaData.GetVersion()}, nil
 		} else {
-			return &Version{Version: -1}, fmt.Errorf("New version number is not right")
+			return &Version{Version: -1}, fmt.Errorf("New version number is not right\n")
 		}
 	} else {
 		m.FileMetaMap[filename] = fileMetaData
@@ -39,6 +40,7 @@ func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) 
 }
 
 func (m *MetaStore) GetBlockStoreAddr(ctx context.Context, _ *emptypb.Empty) (*BlockStoreAddr, error) {
+	log.Printf("block store address: %v\n", m.BlockStoreAddr)
 	return &BlockStoreAddr{Addr: m.BlockStoreAddr}, nil
 }
 
@@ -46,6 +48,7 @@ func (m *MetaStore) GetBlockStoreAddr(ctx context.Context, _ *emptypb.Empty) (*B
 var _ MetaStoreInterface = new(MetaStore)
 
 func NewMetaStore(blockStoreAddr string) *MetaStore {
+	log.Printf("block store addr: %v\n", blockStoreAddr)
 	return &MetaStore{
 		FileMetaMap:    map[string]*FileMetaData{},
 		BlockStoreAddr: blockStoreAddr,

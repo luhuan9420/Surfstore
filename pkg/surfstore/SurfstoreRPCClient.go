@@ -2,12 +2,17 @@ package surfstore
 
 import (
 	context "context"
+	"log"
+	sync "sync"
 	"time"
 
 	grpc "google.golang.org/grpc"
 
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
+
+var blockLock sync.Mutex
+var metaLock sync.Mutex
 
 type RPCClient struct {
 	MetaStoreAddr string
@@ -16,6 +21,8 @@ type RPCClient struct {
 }
 
 func (surfClient *RPCClient) GetBlock(blockHash string, blockStoreAddr string, block *Block) error {
+	blockLock.Lock()
+	defer blockLock.Unlock()
 	// connect to the server
 	conn, err := grpc.Dial(blockStoreAddr, grpc.WithInsecure())
 	if err != nil {
@@ -39,6 +46,10 @@ func (surfClient *RPCClient) GetBlock(blockHash string, blockStoreAddr string, b
 }
 
 func (surfClient *RPCClient) PutBlock(block *Block, blockStoreAddr string, succ *bool) error {
+	blockLock.Lock()
+	defer blockLock.Unlock()
+
+	log.Printf("block store addr: %v\n", blockStoreAddr)
 	conn, err := grpc.Dial(blockStoreAddr, grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -57,6 +68,9 @@ func (surfClient *RPCClient) PutBlock(block *Block, blockStoreAddr string, succ 
 }
 
 func (surfClient *RPCClient) HasBlocks(blockHashesIn []string, blockStoreAddr string, blockHashesOut *[]string) error {
+	blockLock.Lock()
+	defer blockLock.Unlock()
+
 	conn, err := grpc.Dial(blockStoreAddr, grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -75,6 +89,9 @@ func (surfClient *RPCClient) HasBlocks(blockHashesIn []string, blockStoreAddr st
 }
 
 func (surfClient *RPCClient) GetFileInfoMap(serverFileInfoMap *map[string]*FileMetaData) error {
+	metaLock.Lock()
+	defer metaLock.Unlock()
+
 	conn, err := grpc.Dial(surfClient.MetaStoreAddr, grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -93,6 +110,8 @@ func (surfClient *RPCClient) GetFileInfoMap(serverFileInfoMap *map[string]*FileM
 }
 
 func (surfClient *RPCClient) UpdateFile(fileMetaData *FileMetaData, latestVersion *int32) error {
+	metaLock.Lock()
+	defer metaLock.Unlock()
 	conn, err := grpc.Dial(surfClient.MetaStoreAddr, grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -114,6 +133,11 @@ func (surfClient *RPCClient) UpdateFile(fileMetaData *FileMetaData, latestVersio
 }
 
 func (surfClient *RPCClient) GetBlockStoreAddr(blockStoreAddr *string) error {
+	metaLock.Lock()
+	defer metaLock.Unlock()
+
+	log.Printf("meta store addr: %v\n", surfClient.MetaStoreAddr)
+
 	// connect to the server
 	conn, err := grpc.Dial(surfClient.MetaStoreAddr, grpc.WithInsecure())
 	if err != nil {

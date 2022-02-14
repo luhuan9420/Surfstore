@@ -18,7 +18,7 @@ func (bs *BlockStore) GetBlock(ctx context.Context, blockHash *BlockHash) (*Bloc
 	if val, ok := bs.BlockMap[blockHash.GetHash()]; ok {
 		return val, nil
 	} else {
-		return nil, fmt.Errorf("blockHash does not exist in BlockStore")
+		return nil, fmt.Errorf("blockHash does not exist in BlockStore\n")
 	}
 }
 

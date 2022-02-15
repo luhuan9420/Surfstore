@@ -345,7 +345,7 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 	if _, e := os.Stat(filePath); os.IsNotExist(e) {
 		file, err = os.Create(filePath)
 		if err != nil {
-			log.Fatal("Fail to create file: %v\n", err)
+			log.Fatalf("Fail to create file: %v\n", err)
 		}
 	} else {
 		err = os.Remove(filePath)
@@ -354,7 +354,7 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 		}
 		file, err = os.Create(filePath)
 		if err != nil {
-			log.Fatal("Fail to create file: %v\n", err)
+			log.Fatalf("Fail to create file: %v\n", err)
 		}
 	}
 

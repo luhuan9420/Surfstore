@@ -13,7 +13,7 @@ import (
 func ClientSync(client RPCClient) {
 	// check if base dir is valid
 	baseDir := client.BaseDir
-	fmt.Printf("base dir: %v\n", baseDir)
+	// fmt.Printf("base dir: %v\n", baseDir)
 	files, err := ioutil.ReadDir(baseDir)
 	if err != nil {
 		fmt.Errorf("Error when trying to read client base directory: %v\n", err)
@@ -22,7 +22,7 @@ func ClientSync(client RPCClient) {
 	// check index.txt file
 	indexPath := client.BaseDir + "/index.txt"
 	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-		fmt.Print("Index file not exist\n")
+		// fmt.Print("Index file not exist\n")
 		file, err := os.Create(indexPath)
 		if err != nil {
 			log.Fatalf("Fail to create index file: %v\n", err)
@@ -139,7 +139,7 @@ func ClientSync(client RPCClient) {
 			localFileInfoMap[f.Name()] = fmd
 		}
 	}
-	fmt.Printf("size of local file info map: %v\n", len(localFileInfoMap))
+	// fmt.Printf("size of local file info map: %v\n", len(localFileInfoMap))
 	// remaining key in fileDelete is the file that is deleted by client
 	for filename, _ := range fileDelete {
 		fmd := &FileMetaData{
@@ -159,7 +159,7 @@ func ClientSync(client RPCClient) {
 		// fmt.Errorf("Error when trying to get file info from server: %v\n", err)
 		log.Fatalf("Error when trying to get file info from server: %v\n", err)
 	}
-	fmt.Printf("size of server file info map: %v\n", len(serverFileInfoMap))
+	// fmt.Printf("size of server file info map: %v\n", len(serverFileInfoMap))
 	fmt.Print("server file info map")
 	PrintMetaMap(serverFileInfoMap)
 
@@ -214,9 +214,9 @@ func ClientSync(client RPCClient) {
 	PrintMetaMap(localFileInfoMap)
 
 	err = WriteMetaFile(localFileInfoMap, client.BaseDir)
-	if err != nil {
-		log.Fatal("Fail to update index.txt: %v\n", err)
-	}
+	// if err != nil {
+	// 	log.Fatal("Fail to update index.txt: %v\n", err)
+	// }
 
 	// handle conflict
 }
@@ -256,6 +256,7 @@ func cleintSideUpdate(client RPCClient, serverMD *FileMetaData, localFileInfoMap
 }
 
 func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string]*FileMetaData) error {
+	fmt.Println("Start uploading...")
 	fmt.Printf("File name: %v\n", fmd.GetFilename())
 	filePath := client.BaseDir + "/" + fmd.GetFilename()
 	fmt.Printf("File path: %v\n", filePath)
@@ -264,8 +265,8 @@ func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string
 		version := fmd.GetVersion()
 		err := client.UpdateFile(fmd, &version)
 		if err != nil {
-			// fmt.Printf("Failed to update file: %v\n", err)
-			log.Fatalf("Failed to update file: %v\n", err)
+			log.Printf("Failed to update file: %v\n", err)
+			// log.Fatalf("Failed to update file: %v\n", err)
 		}
 		return err
 	}
@@ -321,10 +322,12 @@ func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string
 		}
 		cleintSideUpdate(client, serverFileInfoMap[fmd.GetFilename()], localFileInfoMap)
 	}
+	fmt.Println("Finish uploading...")
 	return err
 }
 
 func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileMetaData, error) {
+	fmt.Println("Start downloading...")
 	filePath := client.BaseDir + "/" + filename
 	if _, e := os.Stat(filePath); os.IsNotExist(e) {
 		os.Create(filePath)
@@ -340,8 +343,8 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 	if len(serverMD.GetBlockHashList()) == 1 && serverMD.GetBlockHashList()[0] == "0" {
 		err := os.Remove(filePath)
 		if err != nil {
-			// fmt.Printf("Fail to delete file: %v\n", err)
-			log.Fatalf("Fail to delete file: %v\n", err)
+			fmt.Printf("Fail to delete file: %v\n", err)
+			// log.Fatalf("Fail to delete file: %v\n", err)
 		}
 		return serverMD, err
 	}
@@ -380,5 +383,6 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 		Version:       serverMD.GetVersion(),
 		BlockHashList: serverMD.GetBlockHashList(),
 	}
+	fmt.Println("Finish downloading...")
 	return fmd, err
 }

@@ -3,8 +3,10 @@ package surfstore
 import (
 	context "context"
 	"fmt"
-	"log"
+	sync "sync"
 )
+
+var blockLock sync.Mutex
 
 type BlockStore struct {
 	BlockMap map[string]*Block
@@ -12,13 +14,15 @@ type BlockStore struct {
 }
 
 func (bs *BlockStore) GetBlock(ctx context.Context, blockHash *BlockHash) (*Block, error) {
+	blockLock.Lock()
+	defer blockLock.Unlock()
 	// if err := contextError(ctx); err != nil {
 	// 	return nil, err
 	// }
-	log.Println("get block: ")
-	for key, _ := range bs.BlockMap {
-		log.Println(key)
-	}
+	// log.Println("get block: ")
+	// for key, _ := range bs.BlockMap {
+	// 	log.Println(key)
+	// }
 	if val, ok := bs.BlockMap[blockHash.GetHash()]; ok {
 		return val, nil
 	} else {
@@ -27,6 +31,8 @@ func (bs *BlockStore) GetBlock(ctx context.Context, blockHash *BlockHash) (*Bloc
 }
 
 func (bs *BlockStore) PutBlock(ctx context.Context, block *Block) (*Success, error) {
+	blockLock.Lock()
+	defer blockLock.Unlock()
 	// if err := contextError(ctx); err != nil {
 	// 	res := &surfstore.Success{
 	// 		flag: false,
@@ -40,10 +46,10 @@ func (bs *BlockStore) PutBlock(ctx context.Context, block *Block) (*Success, err
 		Flag: true,
 	}
 
-	log.Println("put block: ")
-	for key, _ := range bs.BlockMap {
-		log.Println(key)
-	}
+	// log.Println("put block: ")
+	// for key, _ := range bs.BlockMap {
+	// 	log.Println(key)
+	// }
 	// log.Printf("block map: %v\n", bs.BlockMap)
 	return res, nil
 }
@@ -51,6 +57,8 @@ func (bs *BlockStore) PutBlock(ctx context.Context, block *Block) (*Success, err
 // Given a list of hashes “in”, returns a list containing the
 // subset of in that are stored in the key-value store
 func (bs *BlockStore) HasBlocks(ctx context.Context, blockHashesIn *BlockHashes) (*BlockHashes, error) {
+	blockLock.Lock()
+	defer blockLock.Unlock()
 	var found []string
 	for _, blockHash := range blockHashesIn.GetHashes() {
 		if _, ok := bs.BlockMap[blockHash]; ok {

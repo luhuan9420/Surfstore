@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 )
 
@@ -13,8 +12,8 @@ import (
 func ClientSync(client RPCClient) {
 	// check if base dir is valid
 	baseDir := client.BaseDir
-	// fmt.Printf("base dir: %v\n", baseDir)
-	files, err := ioutil.ReadDir(baseDir)
+	// log.Printf("base dir: %v\n", baseDir)
+	localFiles, err := ioutil.ReadDir(baseDir)
 	if err != nil {
 		fmt.Errorf("Error when trying to read client base directory: %v\n", err)
 	}
@@ -22,7 +21,7 @@ func ClientSync(client RPCClient) {
 	// check index.txt file
 	indexPath := client.BaseDir + "/index.txt"
 	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-		// fmt.Print("Index file not exist\n")
+		// log.Print("Index file not exist\n")
 		file, err := os.Create(indexPath)
 		if err != nil {
 			log.Fatalf("Fail to create index file: %v\n", err)
@@ -43,7 +42,7 @@ func ClientSync(client RPCClient) {
 	// 	}
 	// 	// lineArr := strings.Split(line, ",")
 	// 	// if len(lineArr) != 3 {
-	// 	// 	fmt.Printf("Invalid format line: %v", line)
+	// 	// 	log.Printf("Invalid format line: %v", line)
 	// 	// 	continue
 	// 	// }
 	// 	// filename := lineArr[0]
@@ -57,6 +56,8 @@ func ClientSync(client RPCClient) {
 	// 	fmd := NewFileMetaDataFromConfig(line)
 	// 	localFileInfoMap[fmd.GetFilename()] = fmd
 	// }
+
+	// get file info map with local files
 	localFileInfoMap, err := LoadMetaFromMetaFile(client.BaseDir)
 	if err != nil {
 		log.Fatalf("Error when trying to load local file info map: %v\n", err)
@@ -73,8 +74,8 @@ func ClientSync(client RPCClient) {
 	// fileModified := make(map[string]string)
 	fileModified := make(map[string]bool)
 	// fileNew := make(map[string]string)
-	for _, f := range files {
-		fmt.Printf("file name: %v\n", f.Name())
+	for _, f := range localFiles {
+		log.Printf("file name: %v\n", f.Name())
 		if f.Name() == "index.txt" {
 			continue
 		}
@@ -83,7 +84,8 @@ func ClientSync(client RPCClient) {
 			log.Fatalf("Fail to open file %v: %v\n", f.Name(), err)
 		}
 		fileSize := f.Size()
-		blockNeeded := int(math.Ceil(float64(fileSize)) / float64(client.BlockSize))
+		blockNeeded := int(float64(fileSize)/float64(client.BlockSize)) + 1
+		log.Printf("Block needed: %v\n", blockNeeded)
 
 		// file in index.txt, check if hash list is different
 		if fmd, ok := localFileInfoMap[f.Name()]; ok {
@@ -94,7 +96,7 @@ func ClientSync(client RPCClient) {
 				buf := make([]byte, client.BlockSize)
 				size, err := file.Read(buf)
 				if err != nil {
-					// fmt.Printf("error when trying to get hash list: %v\n", err)
+					// log.Printf("error when trying to get hash list: %v\n", err)
 					log.Fatalf("error when trying to get hash list: %v\n", err)
 				}
 				buf = buf[:size]
@@ -121,7 +123,7 @@ func ClientSync(client RPCClient) {
 				buf := make([]byte, client.BlockSize)
 				size, err := file.Read(buf)
 				if err != nil {
-					// fmt.Printf("error when trying to get hash list: %v\n", err)
+					// log.Printf("error when trying to get hash list: %v\n", err)
 					log.Fatalf("error when trying to get hash list: %v\n", err)
 				}
 				buf = buf[:size]
@@ -139,7 +141,7 @@ func ClientSync(client RPCClient) {
 			localFileInfoMap[f.Name()] = fmd
 		}
 	}
-	// fmt.Printf("size of local file info map: %v\n", len(localFileInfoMap))
+	// log.Printf("size of local file info map: %v\n", len(localFileInfoMap))
 	// remaining key in fileDelete is the file that is deleted by client
 	for filename, _ := range fileDelete {
 		fmd := &FileMetaData{
@@ -159,7 +161,7 @@ func ClientSync(client RPCClient) {
 		// fmt.Errorf("Error when trying to get file info from server: %v\n", err)
 		log.Fatalf("Error when trying to get file info from server: %v\n", err)
 	}
-	// fmt.Printf("size of server file info map: %v\n", len(serverFileInfoMap))
+	// log.Printf("size of server file info map: %v\n", len(serverFileInfoMap))
 	fmt.Print("server file info map")
 	PrintMetaMap(serverFileInfoMap)
 
@@ -204,7 +206,7 @@ func ClientSync(client RPCClient) {
 		if _, exist := localFileInfoMap[filename]; !exist {
 			localMD, err := download(client, filename, serverMD)
 			if err != nil {
-				// fmt.Printf("Failed to download file from server: %v\n", err)
+				// log.Printf("Failed to download file from server: %v\n", err)
 				log.Fatalf("Failed to download file from server: %v\n", err)
 			}
 			localFileInfoMap[filename] = localMD
@@ -240,7 +242,7 @@ func serverSideUpdate(client RPCClient, clientMD *FileMetaData, modified bool, l
 	}
 	err := uploadNew(client, clientMD, localFileInfoMap)
 	if err != nil {
-		// fmt.Printf("Fail to upload file: %v\n", err)
+		// log.Printf("Fail to upload file: %v\n", err)
 		log.Fatalf("Fail to upload file: %v\n", err)
 	}
 }
@@ -249,21 +251,21 @@ func cleintSideUpdate(client RPCClient, serverMD *FileMetaData, localFileInfoMap
 	downloadMD, err := download(client, serverMD.GetFilename(), serverMD)
 
 	if err != nil {
-		// fmt.Printf("Fail to download file from server: %v\n", err)
+		// log.Printf("Fail to download file from server: %v\n", err)
 		log.Fatalf("Fail to download file from server: %v\n", err)
 	}
 	(*localFileInfoMap)[serverMD.GetFilename()] = downloadMD
 }
 
 func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string]*FileMetaData) error {
-	fmt.Println("Start uploading...")
-	fmt.Printf("File name: %v\n", fmd.GetFilename())
+	log.Println("Start uploading...")
+	log.Printf("File name: %v\n", fmd.GetFilename())
 	filePath := client.BaseDir + "/" + fmd.GetFilename()
-	fmt.Printf("File path: %v\n", filePath)
+	log.Printf("File path: %v\n", filePath)
 
 	if _, e := os.Stat(filePath); os.IsNotExist(e) {
-		version := fmd.GetVersion()
-		err := client.UpdateFile(fmd, &version)
+		// version := fmd.GetVersion()
+		err := client.UpdateFile(fmd, &fmd.Version)
 		if err != nil {
 			log.Printf("Failed to update file: %v\n", err)
 			// log.Fatalf("Failed to update file: %v\n", err)
@@ -273,20 +275,22 @@ func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		// fmt.Printf("Fail to open file: %v\n", err)
+		// log.Printf("Fail to open file: %v\n", err)
 		log.Fatalf("Fail to open file: %v\n", err)
 	}
 	defer file.Close()
 
 	f, _ := os.Stat(filePath)
-	blockNeeded := int(math.Ceil(float64(f.Size())) / float64(client.BlockSize))
+	blockNeeded := int(float64(f.Size())/float64(client.BlockSize)) + 1
+	// fmt.Printf("block needed: %v\n", blockNeeded)
+	log.Printf("block needed: %v\n", blockNeeded)
 
 	for i := 0; i < blockNeeded; i++ {
 		var block Block
 		block.BlockData = make([]byte, client.BlockSize)
 		n, err := file.Read(block.BlockData)
 		if err != nil && err != io.EOF {
-			// fmt.Printf("Fail to read file: %v\n", err)
+			// log.Printf("Fail to read file: %v\n", err)
 			log.Fatalf("Fail to read file: %v\n", err)
 		}
 		block.BlockSize = int32(n)
@@ -295,39 +299,45 @@ func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string
 		var blockStoreAddr string
 		err = client.GetBlockStoreAddr(&blockStoreAddr)
 		if err != nil {
-			// fmt.Printf("Fail to get block store address: %v\n", err)
+			// log.Printf("Fail to get block store address: %v\n", err)
 			log.Fatalf("Fail to get block store address: %v\n", err)
 		}
-		log.Printf("block store addr: %v\n", blockStoreAddr)
+		// log.Printf("block store addr: %v\n", blockStoreAddr)
 		var succ bool
 		err = client.PutBlock(&block, blockStoreAddr, &succ)
+		log.Printf("Put block success? %v\n", succ)
 		if err != nil {
-			// fmt.Printf("Fail to put block: %v\n", err)
+			// log.Printf("Fail to put block: %v\n", err)
 			log.Fatalf("Fail to put block: %v\n", err)
 		}
+
 	}
 
-	version := fmd.GetVersion()
-	err = client.UpdateFile(fmd, &version)
+	// version := fmd.GetVersion()
+	err = client.UpdateFile(fmd, &fmd.Version)
 	if err != nil {
+		log.Printf("Failed to update file: %v\n", err)
+		return err
+	}
+	if fmd.GetVersion() == -1 {
 		// version mismatch
-		fmt.Printf("Failed to update file: %v\n", err)
+		log.Println("Version mismatch")
 		// log.Fatalf("Failed to update file: %v\n", err)
 		// download newest files from server
 		serverFileInfoMap := make(map[string]*FileMetaData)
 		err = client.GetFileInfoMap(&serverFileInfoMap)
 		if err != nil {
-			// fmt.Printf("Fail to get file info: %v\n", err)
+			// log.Printf("Fail to get file info: %v\n", err)
 			log.Fatalf("Fail to get file info: %v\n", err)
 		}
 		cleintSideUpdate(client, serverFileInfoMap[fmd.GetFilename()], localFileInfoMap)
 	}
-	fmt.Println("Finish uploading...")
+	log.Println("Finish uploading...")
 	return err
 }
 
 func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileMetaData, error) {
-	fmt.Println("Start downloading...")
+	log.Println("Start downloading...")
 	filePath := client.BaseDir + "/" + filename
 
 	var file *os.File
@@ -352,7 +362,7 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 	if len(serverMD.GetBlockHashList()) == 1 && serverMD.GetBlockHashList()[0] == "0" {
 		err := os.Remove(filePath)
 		if err != nil {
-			fmt.Printf("Fail to delete file: %v\n", err)
+			log.Printf("Fail to delete file: %v\n", err)
 			// log.Fatalf("Fail to delete file: %v\n", err)
 		}
 		return serverMD, err
@@ -361,15 +371,18 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 	var blockStoreAddr string
 	err = client.GetBlockStoreAddr(&blockStoreAddr)
 	if err != nil {
-		// fmt.Printf("Fail to get block store address: %v\n", err)
+		// log.Printf("Fail to get block store address: %v\n", err)
 		log.Fatalf("Fail to get block store address: %v\n", err)
 	}
 
-	for _, hash := range serverMD.GetBlockHashList() {
+	for i, hash := range serverMD.GetBlockHashList() {
+		// fmt.Printf("hash list %v\n", i)
+		log.Printf("hash list %v\n", i)
 		var block Block
 		err := client.GetBlock(hash, blockStoreAddr, &block)
+		log.Printf("Block size: %v\n", block.GetBlockSize())
 		if err != nil {
-			// fmt.Printf("Fail to get block: %v\n", err)
+			// log.Printf("Fail to get block: %v\n", err)
 			log.Fatalf("Fail to get block: %v\n", err)
 		}
 
@@ -383,6 +396,6 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 		Version:       serverMD.GetVersion(),
 		BlockHashList: serverMD.GetBlockHashList(),
 	}
-	fmt.Println("Finish downloading...")
+	log.Println("Finish downloading...")
 	return fmd, err
 }

@@ -75,7 +75,7 @@ func ClientSync(client RPCClient) {
 	fileModified := make(map[string]bool)
 	// fileNew := make(map[string]string)
 	for _, f := range localFiles {
-		log.Printf("file name: %v\n", f.Name())
+		// log.Printf("file name: %v\n", f.Name())
 		if f.Name() == "index.txt" {
 			continue
 		}
@@ -259,9 +259,9 @@ func cleintSideUpdate(client RPCClient, serverMD *FileMetaData, localFileInfoMap
 
 func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string]*FileMetaData) error {
 	log.Println("Start uploading...")
-	log.Printf("File name: %v\n", fmd.GetFilename())
+	// log.Printf("File name: %v\n", fmd.GetFilename())
 	filePath := client.BaseDir + "/" + fmd.GetFilename()
-	log.Printf("File path: %v\n", filePath)
+	// log.Printf("File path: %v\n", filePath)
 
 	if _, e := os.Stat(filePath); os.IsNotExist(e) {
 		// version := fmd.GetVersion()
@@ -305,7 +305,7 @@ func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string
 		// log.Printf("block store addr: %v\n", blockStoreAddr)
 		var succ bool
 		err = client.PutBlock(&block, blockStoreAddr, &succ)
-		log.Printf("Put block success? %v\n", succ)
+		// log.Printf("Put block success? %v\n", succ)
 		if err != nil {
 			// log.Printf("Fail to put block: %v\n", err)
 			log.Fatalf("Fail to put block: %v\n", err)
@@ -373,12 +373,12 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 		log.Fatalf("Fail to get block store address: %v\n", err)
 	}
 
-	for i, hash := range serverMD.GetBlockHashList() {
+	for _, hash := range serverMD.GetBlockHashList() {
 		// fmt.Printf("hash list %v\n", i)
-		log.Printf("hash list %v\n", i)
+		// log.Printf("hash list %v\n", i)
 		var block Block
 		err := client.GetBlock(hash, blockStoreAddr, &block)
-		log.Printf("Block size: %v\n", block.GetBlockSize())
+		// log.Printf("Block size: %v\n", block.GetBlockSize())
 		if err != nil {
 			// log.Printf("Fail to get block: %v\n", err)
 			log.Fatalf("Fail to get block: %v\n", err)

@@ -282,7 +282,8 @@ func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string
 
 	f, _ := os.Stat(filePath)
 	blockNeeded := int(float64(f.Size())/float64(client.BlockSize)) + 1
-	fmt.Printf("block needed: %v\n", blockNeeded)
+	// fmt.Printf("block needed: %v\n", blockNeeded)
+	log.Printf("block needed: %v\n", blockNeeded)
 
 	for i := 0; i < blockNeeded; i++ {
 		var block Block
@@ -373,7 +374,8 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 	}
 
 	for i, hash := range serverMD.GetBlockHashList() {
-		fmt.Printf("hash list %v\n", i)
+		// fmt.Printf("hash list %v\n", i)
+		log.Printf("hash list %v\n", i)
 		var block Block
 		err := client.GetBlock(hash, blockStoreAddr, &block)
 		log.Printf("Block size: %v\n", block.GetBlockSize())

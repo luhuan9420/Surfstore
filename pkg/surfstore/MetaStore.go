@@ -40,7 +40,7 @@ func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) 
 }
 
 func (m *MetaStore) GetBlockStoreAddr(ctx context.Context, _ *emptypb.Empty) (*BlockStoreAddr, error) {
-	log.Printf("block store address: %v\n", m.BlockStoreAddr)
+	// log.Printf("block store address: %v\n", m.BlockStoreAddr)
 	return &BlockStoreAddr{Addr: m.BlockStoreAddr}, nil
 }
 

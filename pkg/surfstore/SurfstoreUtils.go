@@ -329,13 +329,22 @@ func uploadNew(client RPCClient, fmd *FileMetaData, localFileInfoMap *map[string
 func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileMetaData, error) {
 	fmt.Println("Start downloading...")
 	filePath := client.BaseDir + "/" + filename
+
+	var file *os.File
+	var err error
 	if _, e := os.Stat(filePath); os.IsNotExist(e) {
-		os.Create(filePath)
-	} else {
-		err := os.Truncate(filePath, 0)
+		file, err = os.Create(filePath)
 		if err != nil {
-			// fmt.Printf("Fail to truncate the file: %v\n", err)
-			log.Fatalf("Fail to truncate the file: %v\n", err)
+			log.Fatal("Fail to create file: %v\n", err)
+		}
+	} else {
+		err = os.Remove(filePath)
+		if err != nil {
+			log.Fatalf("Fail to delete file: %v\n", err)
+		}
+		file, err = os.Create(filePath)
+		if err != nil {
+			log.Fatal("Fail to create file: %v\n", err)
 		}
 	}
 
@@ -348,13 +357,6 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 		}
 		return serverMD, err
 	}
-
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		// fmt.Printf("Fail to open file: %v\n", err)
-		log.Fatalf("Fail to open file: %v\n", err)
-	}
-	defer file.Close()
 
 	var blockStoreAddr string
 	err = client.GetBlockStoreAddr(&blockStoreAddr)
@@ -371,11 +373,9 @@ func download(client RPCClient, filename string, serverMD *FileMetaData) (*FileM
 			log.Fatalf("Fail to get block: %v\n", err)
 		}
 
-		data := string(block.BlockData)
-		_, err = io.WriteString(file, data)
+		_, err = file.Write(block.BlockData)
 		if err != nil {
-			// fmt.Printf("Fail to write file: %v\n", err)
-			log.Fatalf("Fail to write file: %v\n", err)
+			log.Fatalf("Fail to write block data: %v\n", err)
 		}
 	}
 	fmd := &FileMetaData{

@@ -127,6 +127,7 @@ func (surfClient *RPCClient) UpdateFile(fileMetaData *FileMetaData, latestVersio
 		return err
 	}
 	*latestVersion = version.GetVersion()
+	*&fileMetaData.Version = *latestVersion
 
 	// close the connection
 	return conn.Close()

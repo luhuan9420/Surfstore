@@ -3,6 +3,7 @@ package surfstore
 import (
 	context "context"
 	"fmt"
+	"log"
 )
 
 type BlockStore struct {
@@ -14,7 +15,10 @@ func (bs *BlockStore) GetBlock(ctx context.Context, blockHash *BlockHash) (*Bloc
 	// if err := contextError(ctx); err != nil {
 	// 	return nil, err
 	// }
-
+	log.Println("get block: ")
+	for key, _ := range bs.BlockMap {
+		log.Println(key)
+	}
 	if val, ok := bs.BlockMap[blockHash.GetHash()]; ok {
 		return val, nil
 	} else {
@@ -35,6 +39,12 @@ func (bs *BlockStore) PutBlock(ctx context.Context, block *Block) (*Success, err
 	res := &Success{
 		Flag: true,
 	}
+
+	log.Println("put block: ")
+	for key, _ := range bs.BlockMap {
+		log.Println(key)
+	}
+	// log.Printf("block map: %v\n", bs.BlockMap)
 	return res, nil
 }
 

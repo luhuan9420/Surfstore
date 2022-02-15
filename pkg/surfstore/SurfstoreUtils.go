@@ -162,8 +162,8 @@ func ClientSync(client RPCClient) {
 		log.Fatalf("Error when trying to get file info from server: %v\n", err)
 	}
 	// log.Printf("size of server file info map: %v\n", len(serverFileInfoMap))
-	fmt.Print("server file info map")
-	PrintMetaMap(serverFileInfoMap)
+	// fmt.Print("server file info map")
+	// PrintMetaMap(serverFileInfoMap)
 
 	/* compare local index to remote index
 	1. remote index refers to a file not present in local index or base dir
@@ -212,8 +212,8 @@ func ClientSync(client RPCClient) {
 			localFileInfoMap[filename] = localMD
 		}
 	}
-	fmt.Println("local file info map: ")
-	PrintMetaMap(localFileInfoMap)
+	// fmt.Println("local file info map: ")
+	// PrintMetaMap(localFileInfoMap)
 
 	err = WriteMetaFile(localFileInfoMap, client.BaseDir)
 	// if err != nil {
